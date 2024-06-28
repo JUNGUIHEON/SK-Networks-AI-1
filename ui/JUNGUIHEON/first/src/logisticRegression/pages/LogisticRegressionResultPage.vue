@@ -4,7 +4,7 @@
         <p>Accuracy: {{ accuracy }}</p>
         <div ref="chartContainer" class="chart-wrapper">
             <svg ref="svg" :viewBox="`0 0 ${svgWidth} ${svgHeight}`"
-                            preserveAspectRatio="xMidYMid meet"/>
+                            preserveAspectRatio="xMidYMid meet"></svg>
         </div>
     </v-container>
 </template>

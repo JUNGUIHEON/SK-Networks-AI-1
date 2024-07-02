@@ -120,7 +120,7 @@ export default {
             // mount 중에는 불가하므로 아래와 같이 직접 처리
             this.$store.state.authenticationModule.isAuthenticated = true
         }
-        window.addEventListener('storage', this.updateLoginStatus)
+        // window.addEventListener('storage', this.updateLoginStatus)
     },
     beforeUnmount () {
         window.removeEventListener('storage', this.updateLoginStatus)

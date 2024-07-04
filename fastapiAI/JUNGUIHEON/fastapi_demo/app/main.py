@@ -5,14 +5,14 @@ import aiomysql
 from aiokafka.errors import TopicAlreadyExistsError
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 from aiokafka.admin import AIOKafkaAdminClient, NewTopic
 
 from async_db.database import getMySqlPool, createTableIfNecessary
-from decision_tree.controller.decision_tree_controller import decisionTreeRouter
+# from decision_tree.controller.decision_tree_controller import decisionTreeRouter
 from exponential_regression.controller.exponential_regression_controller import exponentialRegressionRouter
 from gradient_descent.controller.gradient_descent_controller import gradientDescentRouter
 from kmeans.controller.kmeans_controller import kmeansRouter
@@ -189,8 +189,23 @@ app.include_router(kmeansRouter)
 app.include_router(tfIrisRouter)
 app.include_router(ordersAnalysisRouter)
 app.include_router(gradientDescentRouter)
-app.include_router(decisionTreeRouter)
+# app.include_router(decisionTreeRouter)
+app.include_router(principalComponentAnalysisRouter)
 
+async def testTopicConsume(app: FastAPI):
+    consumer = app.state.kafka_test_topic_consumer
+
+    while not app.state.stop_event.is_set():
+        try:
+            msg = await consumer.getone()
+            data = json.load(msg.value.decode("utf-8"))
+            print(f"request data: {data}")
+        except asyncio.CancelledError:
+            print("소비자 태스크 종료")
+            break
+
+        except Exception as e:
+            print(f"소비중 에러 발생: {e}")
 
 load_dotenv()
 
@@ -203,6 +218,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.state.connections = set()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    app.state.connections.add(websocket)
+
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        app.state.connections.remove(websocket)
 
 
 if __name__ == "__main__":

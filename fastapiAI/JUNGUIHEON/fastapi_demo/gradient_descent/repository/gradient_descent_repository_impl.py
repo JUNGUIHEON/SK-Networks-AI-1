@@ -65,8 +65,3 @@ class GradientDescentRepositoryImpl(GradientDescentRepository):
 
     def predict(self, loadedModel, tensor):
         return loadedModel(tensor).numpy().tolist()
-
-
-
-
-

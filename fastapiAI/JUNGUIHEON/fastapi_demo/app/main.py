@@ -1,7 +1,9 @@
 import asyncio
+import json
 import os
 
 import aiomysql
+import nltk
 from aiokafka.errors import TopicAlreadyExistsError
 
 from dotenv import load_dotenv
@@ -10,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 from aiokafka.admin import AIOKafkaAdminClient, NewTopic
+from pydantic import BaseModel
 
 from async_db.database import getMySqlPool, createTableIfNecessary
 # from decision_tree.controller.decision_tree_controller import decisionTreeRouter
@@ -19,27 +22,32 @@ from kmeans.controller.kmeans_controller import kmeansRouter
 from logistic_regression.controller.logistic_regression_controller import logisticRegressionRouter
 from polynomialRegression.controller.polynomial_regression_controller import polynomialRegressionRouter
 from post.controller.post_controller import postRouter
+from principal_component_analysis.controller.pca_controller import principalComponentAnalysisRouter
 from random_forest.controller.random_forest_controller import randomForestRouter
+from sentence_structure_analysis.controller.sentence_structure_analysis_controller import \
+    sentenceStructureAnalysisRouter
 from tf_iris.controller.tf_iris_controller import tfIrisRouter
 from train_test_evaluation.controller.train_test_evaluation_controller import trainTestEvaluationRouter
 from orders_analysis.controller.orders_analysis_controller import ordersAnalysisRouter
+
 
 async def create_kafka_topics():
     adminClient = AIOKafkaAdminClient(
         bootstrap_servers='localhost:9092',
         loop=asyncio.get_running_loop()
     )
+
     try:
         await adminClient.start()
 
         topics = [
             NewTopic(
-                'test-topic',
+                "test-topic",
                 num_partitions=1,
                 replication_factor=1,
             ),
             NewTopic(
-                'completion-topic',
+                "completion-topic",
                 num_partitions=1,
                 replication_factor=1,
             ),
@@ -55,6 +63,7 @@ async def create_kafka_topics():
         print(f"카프카 토픽 생성 실패: {e}")
     finally:
         await adminClient.close()
+
 
 # # 현재는 deprecated 라고 나타나지만 lifespan 이란 것을 대신 사용하라고 나타나고 있음
 # # 완전히 배제되지는 않았는데 애플리케이션이 시작할 때 실행될 함수를 지정함
@@ -75,41 +84,42 @@ import warnings
 
 warnings.filterwarnings("ignore", category=aiomysql.Warning)
 
+
 async def lifespan(app: FastAPI):
     # Startup
     app.state.dbPool = await getMySqlPool()
     await createTableIfNecessary(app.state.dbPool)
 
-    # 비동기 I/O 정지 이벤트 감지
-    app.state.stop_event = asyncio.Event()
-
-    # Kafka Producer (생산자) 구성
-    app.state.kafka_producer = AIOKafkaProducer(
-        bootstrap_servers='localhost:9092',
-        client_id='fastapi-kafka-producer'
-    )
-
-    # Kafka Consumer (소비자) 구성
-    app.state.kafka_consumer = AIOKafkaConsumer(
-        'completion_topic',
-        bootstrap_servers='localhost:9092',
-        group_id='my_group',
-        client_id='fastapi-kafka-consumer'
-    )
-
-    # 자동 생성했던 test-topic 관련 소비자
-    app.state.kafka_test_topic_consumer = AIOKafkaConsumer(
-        'test-topic',
-        bootstrap_servers='localhost:9092',
-        group_id='another_group',
-        client_id='fastapi-kafka-consumer'
-    )
-
-    await app.state.kafka_producer.start()
-    await app.state.kafka_consumer.start()
-    await app.state.kafka_test_topic_consumer.start()
-
-    # asyncio.create_task(consume(app))
+    # # 비동기 I/O 정지 이벤트 감지
+    # app.state.stop_event = asyncio.Event()
+    #
+    # # Kafka Producer (생산자) 구성
+    # app.state.kafka_producer = AIOKafkaProducer(
+    #     bootstrap_servers='localhost:9092',
+    #     client_id='fastapi-kafka-producer'
+    # )
+    #
+    # # Kafka Consumer (소비자) 구성
+    # app.state.kafka_consumer = AIOKafkaConsumer(
+    #     'completion_topic',
+    #     bootstrap_servers='localhost:9092',
+    #     group_id="my_group",
+    #     client_id='fastapi-kafka-consumer'
+    # )
+    #
+    # # 자동 생성했던 test-topic 관련 소비자
+    # app.state.kafka_test_topic_consumer = AIOKafkaConsumer(
+    #     'test-topic',
+    #     bootstrap_servers='localhost:9092',
+    #     group_id="another_group",
+    #     client_id='fastapi-kafka-consumer'
+    # )
+    #
+    # await app.state.kafka_producer.start()
+    # await app.state.kafka_consumer.start()
+    # await app.state.kafka_test_topic_consumer.start()
+    #
+    # # asyncio.create_task(consume(app))
     # asyncio.create_task(testTopicConsume(app))
 
     try:
@@ -119,19 +129,21 @@ async def lifespan(app: FastAPI):
         app.state.dbPool.close()
         await app.state.dbPool.wait_closed()
 
-        app.state.stop_event.set()
-
-        await app.state.kafka_producer.stop()
-        await app.state.kafka_consumer.stop()
-        await app.state.kafka_test_topic_consumer.stop()
+        # app.state.stop_event.set()
+        #
+        # await app.state.kafka_producer.stop()
+        # await app.state.kafka_consumer.stop()
+        # await app.state.kafka_test_topic_consumer.stop()
 
 
 app = FastAPI(lifespan=lifespan)
+
 
 # 웹 브라우저 상에서 "/" 을 입력하면 (key)Hello: (value)World가 리턴
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
 
 # 브라우저 상에 /items/4?q=test 같은 것을 넣으면
 # item_id로 4, q로는 "test"를 획득하게 됨
@@ -142,6 +154,7 @@ def read_root():
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: str = None):
     return {"item_id": item_id, "q": q}
+
 
 # 사실 현재 위의 코드는 매우 근본이 없는 .... 코드임
 # 왜냐하면 모든 로직을 main에 전부 따 때려박았기 때문
@@ -179,6 +192,21 @@ def read_item(item_id: int, q: str = None):
 # 점진적으로 개선시키는 것이 '애자일' 방식임
 # (빠른 습득 및 생산성의 비밀임 ㅇㅇ)
 
+def download_nltk_data():
+    nltk_data_path = os.path.join(os.path.expanduser("~"), "nltk_data")
+    if not os.path.exists(nltk_data_path):
+        os.makedirs(nltk_data_path)
+
+    if not os.path.exists(os.path.join(nltk_data_path, "corpora", "stopwords")):
+        nltk.download('stopwords', download_dir=nltk_data_path)
+
+    # punkt 다운로드
+    if not os.path.exists(os.path.join(nltk_data_path, "tokenizers", "punkt")):
+        nltk.download('punkt', download_dir=nltk_data_path)
+
+
+download_nltk_data()
+
 app.include_router(logisticRegressionRouter)
 app.include_router(trainTestEvaluationRouter)
 app.include_router(polynomialRegressionRouter)
@@ -191,6 +219,13 @@ app.include_router(ordersAnalysisRouter)
 app.include_router(gradientDescentRouter)
 # app.include_router(decisionTreeRouter)
 app.include_router(principalComponentAnalysisRouter)
+# app.include_router(convolutionNeuralNetworkRouter)
+# app.include_router(recurrentNeuralNetworkRouter)
+# app.include_router(srbcbRouter)
+# app.include_router(tfIdfBowRouter)
+# app.include_router(gameDataFineTuningRouter)
+app.include_router(sentenceStructureAnalysisRouter)
+
 
 async def testTopicConsume(app: FastAPI):
     consumer = app.state.kafka_test_topic_consumer
@@ -198,14 +233,27 @@ async def testTopicConsume(app: FastAPI):
     while not app.state.stop_event.is_set():
         try:
             msg = await consumer.getone()
-            data = json.load(msg.value.decode("utf-8"))
+            print(f"msg: {msg}")
+            data = json.loads(msg.value.decode("utf-8"))
             print(f"request data: {data}")
+
+            # 실제로 여기서 뭔가 요청을 하던 뭘 하던 지지고 볶으면 됨
+            await asyncio.sleep(60)
+
+            for connection in app.state.connections:
+                await connection.send_json({
+                    'message': 'Processing completed.',
+                    'data': data,
+                    'title': "Kafka Test"
+                })
+
         except asyncio.CancelledError:
             print("소비자 태스크 종료")
             break
 
         except Exception as e:
-            print(f"소비중 에러 발생: {e}")
+            print(f"소비 중 에러 발생: {e}")
+
 
 load_dotenv()
 
@@ -221,6 +269,19 @@ app.add_middleware(
 
 app.state.connections = set()
 
+
+class KafkaRequest(BaseModel):
+    message: str
+
+
+@app.post("/kafka-endpoint")
+async def kafka_endpoint(request: KafkaRequest):
+    eventData = request.dict()
+    await app.state.kafka_producer.send_and_wait("test-topic", json.dumps(eventData).encode())
+
+    return {"status": "processing"}
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -235,5 +296,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
 if __name__ == "__main__":
     import uvicorn
-    asyncio.run(create_kafka_topics())
+
+    # asyncio.run(create_kafka_topics())
     uvicorn.run(app, host="192.168.0.55", port=33333)

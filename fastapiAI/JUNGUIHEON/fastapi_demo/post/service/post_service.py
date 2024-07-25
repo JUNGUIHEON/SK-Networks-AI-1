@@ -11,7 +11,6 @@ class PostService(ABC):
     def postList(self) -> List[Post]:
         pass
 
-
     @abstractmethod
     def createPost(self, createPostRequest: CreatePostRequest) -> CreatePostResponseForm:
         pass

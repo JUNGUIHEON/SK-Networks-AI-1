@@ -1,13 +1,15 @@
-from post.repository.post_repository import PostRepository
-from aiomysql import Pool
 from typing import List, Optional
 
+from aiomysql import Pool
+
 from post.entity.models import Post
+from post.repository.post_repository import PostRepository
 
 
 class PostRepositoryImpl(PostRepository):
     def __init__(self, db_pool: Pool):
         self.dbPool = db_pool
+
     async def list(self) -> List[Post]:
         print("repository -> list()")
 
@@ -43,4 +45,3 @@ class PostRepositoryImpl(PostRepository):
                     return Post(id=result[0], title=result[1], content=result[2])
 
                 return None
-

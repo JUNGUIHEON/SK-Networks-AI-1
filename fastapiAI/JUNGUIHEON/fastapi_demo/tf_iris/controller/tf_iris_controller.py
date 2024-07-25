@@ -19,7 +19,7 @@ tfIrisRouter = APIRouter()
 
 MODEL_PATH = 'tf_iris_model.h5'
 SCALER_PATH = 'tf_iris_scaler.pk1'
-CLASSIFICATION_PATH = "tf_iris_classification_label.pk1"
+CLASSIFICATION_PATH = 'tf_iris_classification_label.pk1'
 # CLASSIFICATION_NAME = None
 
 @tfIrisRouter.get("/tf-train")
@@ -122,7 +122,7 @@ def predict(tfIrisRequestForm: TfIrisRequestForm):
     if (not os.path.exists(MODEL_PATH) or
             not os.path.exists(SCALER_PATH) or
             not os.path.exists(CLASSIFICATION_PATH)):
-        raise HTTPException(status_code=400, detail="train부터 진행해주세요! 모델 및 스케일러 준비 안됨")
+        raise HTTPException(status_code=400, detail="train부터 진행해주세요! 모델 및 스케일러 준비 안됨!")
     
     print("추론 진행")
 
@@ -143,7 +143,7 @@ def predict(tfIrisRequestForm: TfIrisRequestForm):
     prediction = model.predict(data)
     print(f"prediction: {prediction}")
     whichOneIsMax = np.argmax(prediction)
-    print(f"which one is max ? {whichOneIsMax}")
+    print(f"which one is max ? whichOneIsMax")
 
     predictedClass = classificationLabel[np.argmax(prediction)]
     print(f"predictedClass: {predictedClass}")

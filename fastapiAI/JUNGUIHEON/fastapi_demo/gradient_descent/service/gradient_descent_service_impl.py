@@ -42,7 +42,3 @@ class GradientDescentServiceImpl(GradientDescentService):
         predictions = self.gradientDescentRepository.predict(loadedModel, request.toTensor())
 
         return predictions
-
-
-
-

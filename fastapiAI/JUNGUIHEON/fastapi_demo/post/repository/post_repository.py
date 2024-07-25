@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from post.entity.models import Post
 
+
 class PostRepository(ABC):
     @abstractmethod
     def list(self) -> List[Post]:

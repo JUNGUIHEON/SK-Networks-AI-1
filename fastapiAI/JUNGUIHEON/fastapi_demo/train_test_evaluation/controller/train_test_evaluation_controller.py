@@ -13,7 +13,7 @@ from train_test_evaluation.controller.response_form.analysis_result_response_for
 trainTestEvaluationRouter = APIRouter()
 
 # Response, ResponseForm, Request, RequestForm
-# response model을 사용 할 때
+# response_form model을 사용 할 때
 # 리턴 타입이 등록한 타입과 다르면 에러 메시지가 출력됨
 @trainTestEvaluationRouter.get("/train-test-evaluation",
                                response_model=AnalysisResultResponseForm)

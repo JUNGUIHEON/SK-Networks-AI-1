@@ -15,5 +15,5 @@ async def srbcbTrain(srbcbRequestForm: SrbcbRequestForm,
 
     print(f"controller -> srbcbTrain(): srbcbRequestForm: {srbcbRequestForm}")
 
-    generatedText = srbcbService.predict(srbcbRequestForm.userSendMessage)
+    generatedText = srbcbService.ruleBaseResponse(srbcbRequestForm.userSendMessage)
     return JSONResponse(content={"generatedText": generatedText}, status_code=status.HTTP_200_OK)

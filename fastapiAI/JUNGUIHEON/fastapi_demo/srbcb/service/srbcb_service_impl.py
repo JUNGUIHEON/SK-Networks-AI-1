@@ -6,6 +6,6 @@ class SrbcbServiceImpl(SrbcbService):
     def __init__(self):
         self.srbcbRepository = SrbcbRepositoryImpl()
 
-    def predict(self, userSendMessage):
+    def ruleBaseResponse(self, userSendMessage):
         return self.srbcbRepository.generateBotMessage(userSendMessage)
 

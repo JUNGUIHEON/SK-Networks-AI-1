@@ -26,6 +26,7 @@ from principal_component_analysis.controller.pca_controller import principalComp
 from random_forest.controller.random_forest_controller import randomForestRouter
 from sentence_structure_analysis.controller.sentence_structure_analysis_controller import \
     sentenceStructureAnalysisRouter
+from srbcb.controller.srbcb_controller import srbcbRouter
 from tf_iris.controller.tf_iris_controller import tfIrisRouter
 from train_test_evaluation.controller.train_test_evaluation_controller import trainTestEvaluationRouter
 from orders_analysis.controller.orders_analysis_controller import ordersAnalysisRouter
@@ -225,6 +226,7 @@ app.include_router(principalComponentAnalysisRouter)
 # app.include_router(tfIdfBowRouter)
 # app.include_router(gameDataFineTuningRouter)
 app.include_router(sentenceStructureAnalysisRouter)
+app.include_router(srbcbRouter)
 
 
 async def testTopicConsume(app: FastAPI):

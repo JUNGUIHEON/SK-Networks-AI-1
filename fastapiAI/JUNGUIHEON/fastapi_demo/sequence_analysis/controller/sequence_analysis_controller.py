@@ -9,7 +9,6 @@ sequenceAnalysisRouter = APIRouter()
 async def injectSequenceAnalysisService() -> SequenceAnalysisServiceImpl:
     return SequenceAnalysisServiceImpl()
 
-
 @sequenceAnalysisRouter.post("/predict-next-sequence")
 async def predictNextSequence(sequenceAnalysisRequestForm: SequenceAnalysisRequestForm,
                               sequenceAnalysisService: SequenceAnalysisServiceImpl =
@@ -19,4 +18,5 @@ async def predictNextSequence(sequenceAnalysisRequestForm: SequenceAnalysisReque
 
     predictedNextSequence = sequenceAnalysisService.predictNextSequence(
         sequenceAnalysisRequestForm.userSendMessage)
+
     return JSONResponse(content=predictedNextSequence, status_code=status.HTTP_200_OK)

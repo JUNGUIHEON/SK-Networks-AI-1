@@ -19,10 +19,11 @@ async def operateLanguageModel(languageModelService: LanguageModelServiceImpl =
 
     # return JSONResponse(content=predictedNextSequence, status_code=status.HTTP_200_OK)
 
-    @languageModelRouter.post("/predict-with-modeling-language")
-    async def predictModelingLanguage(userPredictRequestForm: UserPredictRequestForm,
-                                      languageModelService: LanguageModelServiceImpl =
-                                      Depends(injectLanguageModelService)):
-        predictedText = languageModelService.predictWithModelingLanguage(userPredictRequestForm)
+@languageModelRouter.post("/predict-with-modeling-language")
+async def predictModelingLanguage(userPredictRequestForm: UserPredictRequestForm,
+                                  languageModelService: LanguageModelServiceImpl =
+                                  Depends(injectLanguageModelService)):
 
-        return JSONResponse(content=predictedText, status_code=status.HTTP_200_OK)
+    predictedText = languageModelService.predictWithModelingLanguage(userPredictRequestForm)
+
+    return JSONResponse(content=predictedText, status_code=status.HTTP_200_OK)

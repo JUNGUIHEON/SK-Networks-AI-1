@@ -2,10 +2,14 @@ import os
 
 import numpy as np
 import tensorflow
+
 from keras import Sequential
 from keras.src.callbacks import ModelCheckpoint
 from keras.src.layers import Embedding, LSTM, Dense
 from keras.src.losses import sparse_categorical_crossentropy
+
+from tensorflow.keras.models import load_model
+from tensorflow.keras.utils import custom_object_scope
 
 from language_model.repository.language_model_repository import LanguageModelRepository
 
@@ -20,6 +24,9 @@ class LanguageModelRepositoryImpl(LanguageModelRepository):
     RNN_UNITS = 1024
 
     EPOCHS = 20
+
+    SHAKESPEARE_MODEL_PATH = "shakespeare_model.h5"
+    GENERATION_COUNT = 1000
 
     # 고유 문자 목록 생성
     def preprocessForCreateUniqueCharacter(self, text):
@@ -70,3 +77,27 @@ class LanguageModelRepositoryImpl(LanguageModelRepository):
         model.fit(shuffledDataset, epochs=self.EPOCHS, callbacks=[checkpointCallback])
 
         model.save('shakespeare_model.h5')
+
+    def requestToReadShakespeareModel(self):
+        customObjects = {'__customLossFunction': LanguageModelRepositoryImpl.__customLossFunction}
+
+        model = load_model(self.SHAKESPEARE_MODEL_PATH, custom_objects=customObjects)
+        return model
+
+    def convertTextToTensor(self, userInputText, charToIndex):
+        print("repository -> convertTextToTensor()")
+        input = [charToIndex[i] for i in userInputText]
+        print(f"userInputText: {userInputText}")
+        print(f"input: {input}")
+        inputTensor = tensorflow.expand_dims(input, 0)
+        print(f"inputTensor: {inputTensor}")
+
+        return inputTensor
+
+    def generateText(self, loadedModel, inputTensor, indexToChar):
+        print("repository -> generateText()")
+        # loadedModel.reset_states()
+
+        for _ in range(self.GENERATION_COUNT):
+            prediction = loadedModel(inputTensor)
+            print(f"prediction: {prediction}")

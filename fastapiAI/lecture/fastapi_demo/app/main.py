@@ -28,8 +28,10 @@ from post.controller.post_controller import postRouter
 from principal_component_analysis.controller.pca_controller import principalComponentAnalysisRouter
 from random_forest.controller.random_forest_controller import randomForestRouter
 from recurrent_neural_network.controller.rnn_controller import recurrentNeuralNetworkRouter
+from review_analysis.controller.review_analysis_controller import reviewAnalysisRouter
 from sentence_structure_analysis.controller.sentence_structure_analysis_controller import \
     sentenceStructureAnalysisRouter
+from sentitest.controller.senticontrol import naturalLanguageProcessingRouter
 from sequence_analysis.controller.sequence_analysis_controller import sequenceAnalysisRouter
 from srbcb.controller.srbcb_controller import srbcbRouter
 from tf_idf_bow.controller.tf_idf_bow_controller import tfIdfBowRouter
@@ -226,6 +228,8 @@ app.include_router(gameDataFineTuningRouter)
 app.include_router(sentenceStructureAnalysisRouter)
 app.include_router(sequenceAnalysisRouter)
 app.include_router(languageModelRouter)
+app.include_router(reviewAnalysisRouter)
+app.include_router(naturalLanguageProcessingRouter)
 
 async def testTopicConsume(app: FastAPI):
     consumer = app.state.kafka_test_topic_consumer
@@ -293,4 +297,4 @@ async def websocket_endpoint(websocket: WebSocket):
 if __name__ == "__main__":
     import uvicorn
     # asyncio.run(create_kafka_topics())
-    uvicorn.run(app, host="192.168.0.18", port=33333)
+    uvicorn.run(app, host="192.168.0.33", port=33333)

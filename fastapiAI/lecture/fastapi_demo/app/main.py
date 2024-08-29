@@ -4,22 +4,25 @@ import os
 
 import aiomysql
 import nltk
-from aiokafka.admin import AIOKafkaAdminClient, NewTopic
-from aiokafka.errors import TopicAlreadyExistsError
+# from aiokafka.admin import AIOKafkaAdminClient, NewTopic
+# from aiokafka.errors import TopicAlreadyExistsError
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
+# from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 from pydantic import BaseModel
 
 from async_db.database import getMySqlPool, createTableIfNeccessary
 from convolution_neural_network.controller.cnn_controller import convolutionNeuralNetworkRouter
+from cot.cot_controller import cotRouter
 # from decision_tree.controller.decision_tree_controller import decisionTreeRouter
 from exponential_regression.controller.exponential_regression_controller import exponentialRegressionRouter
+from game_fine_tuning.gft_controller import openAiFineTuningTestRouter
 from gdft.controller.gdft_controller import gameDataFineTuningRouter
 from gradient_descent.controller.gradient_descent_controller import gradientDescentRouter
 from kmeans.controller.kmeans_controller import kmeansRouter
+from langchain_interconnect.controller.langchain_controller import langchainRouter
 from language_model.controller.language_model_controller import languageModelRouter
 from logistic_regression.controller.logistic_regression_controller import logisticRegressionRouter
 from openai_basic.controller.openai_basic_controller import openAIBasicRouter
@@ -30,6 +33,7 @@ from principal_component_analysis.controller.pca_controller import principalComp
 from random_forest.controller.random_forest_controller import randomForestRouter
 from recurrent_neural_network.controller.rnn_controller import recurrentNeuralNetworkRouter
 from review_analysis.controller.review_analysis_controller import reviewAnalysisRouter
+from rlhf.rlhf_controller import rlhfFineTuningRouter
 from sentence_structure_analysis.controller.sentence_structure_analysis_controller import \
     sentenceStructureAnalysisRouter
 from sentitest.controller.senticontrol import naturalLanguageProcessingRouter
@@ -42,38 +46,38 @@ from transition_learning.controller.transition_learning_controller import transi
 from vector_db.database import getMongoDBPool
 
 
-async def create_kafka_topics():
-    adminClient = AIOKafkaAdminClient(
-        bootstrap_servers='localhost:9092',
-        loop=asyncio.get_running_loop()
-    )
-
-    try:
-        await adminClient.start()
-
-        topics = [
-            NewTopic(
-                "test-topic",
-                num_partitions=1,
-                replication_factor=1,
-            ),
-            NewTopic(
-                "completion-topic",
-                num_partitions=1,
-                replication_factor=1,
-            ),
-        ]
-
-        for topic in topics:
-            try:
-                await adminClient.create_topics([topic])
-            except TopicAlreadyExistsError:
-                print(f"Topic '{topic.name}' already exists, skipping creation")
-
-    except Exception as e:
-        print(f"카프카 토픽 생성 실패: {e}")
-    finally:
-        await adminClient.close()
+# async def create_kafka_topics():
+#     adminClient = AIOKafkaAdminClient(
+#         bootstrap_servers='localhost:9092',
+#         loop=asyncio.get_running_loop()
+#     )
+#
+#     try:
+#         await adminClient.start()
+#
+#         topics = [
+#             NewTopic(
+#                 "test-topic",
+#                 num_partitions=1,
+#                 replication_factor=1,
+#             ),
+#             NewTopic(
+#                 "completion-topic",
+#                 num_partitions=1,
+#                 replication_factor=1,
+#             ),
+#         ]
+#
+#         for topic in topics:
+#             try:
+#                 await adminClient.create_topics([topic])
+#             except TopicAlreadyExistsError:
+#                 print(f"Topic '{topic.name}' already exists, skipping creation")
+#
+#     except Exception as e:
+#         print(f"카프카 토픽 생성 실패: {e}")
+#     finally:
+#         await adminClient.close()
 
 # # 현재는 deprecated 라고 나타나지만 lifespan 이란 것을 대신 사용하라고 나타나고 있음
 # # 완전히 배제되지는 않았는데 애플리케이션이 시작할 때 실행될 함수를 지정함
@@ -241,6 +245,10 @@ app.include_router(reviewAnalysisRouter)
 app.include_router(naturalLanguageProcessingRouter)
 app.include_router(transitionLearningRouter)
 app.include_router(openAIBasicRouter)
+app.include_router(langchainRouter)
+app.include_router(cotRouter)
+app.include_router(openAiFineTuningTestRouter)
+app.include_router(rlhfFineTuningRouter)
 
 async def testTopicConsume(app: FastAPI):
     consumer = app.state.kafka_test_topic_consumer
